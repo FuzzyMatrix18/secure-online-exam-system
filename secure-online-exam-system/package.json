@@ -1,0 +1,14 @@
+{
+  "name": "secure-online-exam-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -k \"cd server && MONGO_URI=\"mongodb://127.0.0.1:27017/soe_dev\" JWT_SECRET=\"devjwt\" REFRESH_SECRET=\"devrefresh\" AES_SECRET=\"devsecret\" PORT=5050 npm run dev\" \"cd client && REACT_APP_API_URL=http://localhost:5050 npm start\"",
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm start",
+    "build:client": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
