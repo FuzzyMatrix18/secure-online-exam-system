@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
+import examRoutes from "./routes/examRoutes.js";
+import resultRoutes from "./routes/resultRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -23,6 +26,9 @@ app.use(
 
 /* ===== ROUTES ===== */
 app.use("/api/auth", authRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/results", resultRoutes);
+app.use("/api/admin", adminRoutes);
 
 /* ===== DB ===== */
 mongoose

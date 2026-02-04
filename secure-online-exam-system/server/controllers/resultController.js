@@ -87,3 +87,38 @@ export const verifyAndSave = async (req, res) => {
 
 	res.json({ result, score: totalAwarded, total: totalPossible });
 };
+
+export const listMyResults = async (req, res) => {
+	const results = await Result.find({ user: req.user.id })
+		.sort({ createdAt: -1 })
+		.populate("exam", "title")
+		.lean();
+	res.json(results);
+};
+
+export const listLeaderboard = async (_req, res) => {
+	const results = await Result.find()
+		.sort({ score: -1 })
+		.populate("user", "email")
+		.lean();
+
+	const best = new Map();
+	for (const r of results) {
+		const userId = r.user?._id?.toString() || r.user?.toString();
+		if (!userId) continue;
+		const current = best.get(userId);
+		if (!current || current.score < r.score) {
+			best.set(userId, {
+				user: r.user?.email || "Anonymous",
+				score: r.score,
+				total: r.total
+			});
+		}
+	}
+
+	const top = Array.from(best.values())
+		.sort((a, b) => b.score - a.score)
+		.slice(0, 10);
+
+	res.json(top);
+};
