@@ -7,7 +7,7 @@ const router = express.Router();
 
 /* LOGIN */
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, remember } = req.body;
 
   const user = await User.findOne({ email });
   if (!user) {
@@ -19,18 +19,25 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
+  const tokenTtlMs = 30 * 24 * 60 * 60 * 1000; // 30 days
   const token = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user._id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: remember ? "30d" : "1d" }
   );
 
-  res.cookie("token", token, {
+  const cookieOptions = {
     httpOnly: true,
-    secure: false,      // localhost
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-  });
+  };
+
+  if (remember) {
+    cookieOptions.maxAge = tokenTtlMs;
+  }
+
+  res.cookie("token", token, cookieOptions);
 
   res.json({
     email: user.email,
@@ -53,8 +60,11 @@ router.get("/me", (req, res) => {
 
 /* LOGOUT */
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", { path: "/" });
-  res.json({ message: "Logged out" });
+  const soft = req.query?.soft === "true";
+  if (!soft) {
+    res.clearCookie("token", { path: "/" });
+  }
+  res.json({ message: soft ? "Soft logout" : "Logged out" });
 });
 
 export default router;
