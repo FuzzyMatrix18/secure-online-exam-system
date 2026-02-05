@@ -9,7 +9,8 @@ const resultSchema = new mongoose.Schema({
   answer: { type: String },
   correctAnswer: { type: String },
   weight: { type: Number, default: 1 },
-  awarded: { type: Number, default: 0 }
+  awarded: { type: Number, default: 0 },
+  needsManual: { type: Boolean, default: false }
     }
   ],
   score: { type: Number, default: 0 },

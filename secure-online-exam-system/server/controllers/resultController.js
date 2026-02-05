@@ -34,36 +34,40 @@ export const verifyAndSave = async (req, res) => {
 	let totalAwarded = 0;
 
 	const answerRecords = answers.map(a => {
-		const meta = decrypted[a.questionIndex] ?? { correctAnswer: null, weight: 1 };
+		const qIndex = a.questionIndex ?? a.index ?? a.idx;
+		const meta = decrypted[qIndex] ?? { correctAnswer: null, weight: 1 };
 		const correct = meta.correctAnswer ?? null;
 		const weight = typeof meta.weight === "number" ? meta.weight : 1;
 		totalPossible += weight;
 
 		let awarded = 0;
 
-		// exact match -> full points
-		if (correct !== null && String(a.answer).trim() === String(correct).trim()) {
-			awarded = weight;
-		} else if (meta.partials && Array.isArray(meta.partials)) {
-			// partials: array of { match, score } where score is fraction of weight (0..1)
-			for (const p of meta.partials) {
-				if (!p || typeof p.match !== "string") continue;
-				if (String(a.answer).toLowerCase().includes(p.match.toLowerCase())) {
-					awarded += (typeof p.score === "number" ? p.score : 0) * weight;
+		if (meta.autoGrade !== false) {
+			// exact match -> full points
+			if (correct !== null && String(a.answer).trim() === String(correct).trim()) {
+				awarded = weight;
+			} else if (meta.partials && Array.isArray(meta.partials)) {
+				// partials: array of { match, score } where score is fraction of weight (0..1)
+				for (const p of meta.partials) {
+					if (!p || typeof p.match !== "string") continue;
+					if (String(a.answer).toLowerCase().includes(p.match.toLowerCase())) {
+						awarded += (typeof p.score === "number" ? p.score : 0) * weight;
+					}
 				}
+				// cap awarded to weight
+				if (awarded > weight) awarded = weight;
 			}
-			// cap awarded to weight
-			if (awarded > weight) awarded = weight;
 		}
 
 		totalAwarded += awarded;
 
 		return {
-			questionIndex: a.questionIndex,
+			questionIndex: qIndex,
 			answer: a.answer,
 			correctAnswer: correct,
 			weight,
-			awarded
+			awarded,
+			needsManual: meta.autoGrade === false
 		};
 	});
 
@@ -73,7 +77,14 @@ export const verifyAndSave = async (req, res) => {
 		if (!answerRecords.find(r => r.questionIndex === i)) {
 			const meta = decrypted[i] ?? { correctAnswer: null, weight: 1 };
 			totalPossible += typeof meta.weight === "number" ? meta.weight : 1;
-			answerRecords.push({ questionIndex: i, answer: null, correctAnswer: meta.correctAnswer ?? null, weight: meta.weight ?? 1, awarded: 0 });
+			answerRecords.push({
+				questionIndex: i,
+				answer: null,
+				correctAnswer: meta.correctAnswer ?? null,
+				weight: meta.weight ?? 1,
+				awarded: 0,
+				needsManual: meta.autoGrade === false
+			});
 		}
 	}
 
