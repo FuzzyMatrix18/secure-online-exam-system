@@ -37,6 +37,7 @@ const run = async () => {
     const userIds = users.map(u => u._id);
     if (userIds.length) filter.user = { $in: userIds };
   }
+  
 
   const results = await Result.find(filter).populate('exam user').sort({ createdAt: -1 }).lean();
   console.log('Found', results.length, 'results');
@@ -92,3 +93,4 @@ run().catch(err => {
   console.error(err);
   process.exit(1);
 });
+print("Hi")
